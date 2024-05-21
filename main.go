@@ -115,7 +115,14 @@ func main() {
 			},
 		},
 	)
-
+	f, err := os.Create("test.txt")
+	l, err := f.WriteString(resp.Choices[0].Message.Content)
+	fmt.Println(l)
+	if err != nil {
+		fmt.Println(err)
+        f.Close()
+		return
+	}
 	fmt.Println(resp.Choices[0].Message.Content)
 
 	if err != nil {
