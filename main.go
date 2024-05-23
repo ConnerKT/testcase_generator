@@ -3,13 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/joho/godotenv"
 	openai "github.com/sashabaranov/go-openai"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
-	"os"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Challenge struct {
@@ -18,9 +20,10 @@ type Challenge struct {
 	Difficulty         string             `bson:"difficulty"`
 	Description        string             `bson:"description"`
 	Link               string             `bson:"link"`
-	FunctionSignatures struct {
-		Python     string `bson:"python"`
-		Javascript string `bson:"javascript"`
+	FunctionSignatures []struct {
+		Name      string `bson:"name"`
+		Language  string `bson:"language"`
+		Value     string `bson:"value"`
 	} `bson:"functionSignatures"`
 	TestCases []struct {
 		ID    string `bson:"id"`
@@ -31,16 +34,12 @@ type Challenge struct {
 		Output []int `bson:"output"`
 	} `bson:"testCases"`
 }
-type Problem struct {
-	Description       string
-	FunctionSignature string
-}
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
+	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
+
 	uri := os.Getenv("DB_URI")
 	apiKey := os.Getenv("OPENAI_API_KEY")
 
@@ -63,7 +62,6 @@ func main() {
 	}
 	defer cursor.Close(context.TODO())
 
-	// Open the file in append mode before the loop
 	f, err := os.OpenFile("test.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatalf("Error opening file: %v", err)
@@ -72,10 +70,11 @@ func main() {
 
 	for cursor.Next(context.TODO()) {
 		var result Challenge
-		err := cursor.Decode(&result)
-		if err != nil {
+		if err := cursor.Decode(&result); err != nil {
 			log.Fatalf("Error decoding document: %v", err)
 		}
+
+		fmt.Printf("Decoded document: %+v\n", result)
 
 		prompt := fmt.Sprintf(`Given the following leetcode problem: %s, generate input values that match the functionSignatures %v`, result.Description, result.FunctionSignatures)
 		openClient := openai.NewClient(apiKey)
@@ -98,13 +97,12 @@ func main() {
 			log.Fatalf("No choices returned from OpenAI")
 		}
 
-	
-		_, err = f.WriteString(resp.Choices[0].Message.Content + "\n")
-		if err != nil {
+		content := resp.Choices[0].Message.Content
+		if _, err := f.WriteString(content + "\n"); err != nil {
 			log.Fatalf("Error writing to file: %v", err)
 		}
 
-		fmt.Println(resp.Choices[0].Message.Content)
+		fmt.Println(content)
 	}
 
 	if err := cursor.Err(); err != nil {
