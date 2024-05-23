@@ -1,23 +1,5 @@
-To generate input values that match the function signature for the given LeetCode problem, we can create an array of integers `nums` and an integer `target` as input values. Here is an example of how we can generate input values:
+Sure! Here are some example input values that match the function signature for the given problem:
 
-```go
-package main
-
-import (
-    "fmt"
-)
-
-func twoSum(nums []int, target int) []int {
-    // Your code here
-}
-
-func main() {
-    nums := []int{2, 7, 11, 15}
-    target := 9
-
-    output := twoSum(nums, target)
-    fmt.Println(output)
-}
-```
-
-In this example, we have defined the `nums` array with values `[2, 7, 11, 15]` and the `target` integer as `9`. You can modify these values to create different input scenarios for testing the `twoSum` function.
+1. nums = [2, 7, 11, 15], target = 9
+2. nums = [3, 2, 4], target = 6
+3. nums = [3, 3], target = 6
