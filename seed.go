@@ -1,3 +1,6 @@
+// This is the seed file to alter the databases functionSequence to the correct format
+// This currently doesn't work, why? Don't ask me
+
 package main
 
 import (
