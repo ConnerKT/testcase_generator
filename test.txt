@@ -29,3 +29,79 @@ As for generating input values that match the function signatures [{ } { }], you
 
 This JSON input represents an array of integers and a target integer that can be parsed and used as input for the `twoSum` function.
 [{[2,4,3], [5,6,4]}, {[0], [0]}, {[9,9,9,9,9,9,9], [9,9,9,9]}]
+To solve this problem in less than O(n^2) time complexity, we can use a hashmap to store the difference between the target and the current element as we iterate through the array. Here's the Python implementation:
+
+```python
+def twoSum(nums, target):
+    hashmap = {} # create an empty hashmap
+
+    for i in range(len(nums)):
+        complement = target - nums[i] # calculate the complement needed to reach the target
+        
+        if complement in hashmap: # if the complement is already in the hashmap, return the indices
+            return [hashmap[complement], i]
+        
+        hashmap[nums[i]] = i # store the current element and its index in the hashmap
+
+# Example usage
+nums = [2, 7, 11, 15]
+target = 9
+print(twoSum(nums, target)) # Output: [0, 1]
+```
+
+This solution has a time complexity of O(n) where n is the number of elements in the array, as we only need to iterate through the array once.
+For the Python function signature:
+
+```python
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+def addTwoNumbers(l1: ListNode, l2: ListNode) -> ListNode:
+    pass
+```
+
+You can generate input values for `l1` and `l2` as follows:
+
+1. For Example 1:
+```python
+# l1 = [2,4,3]
+node1 = ListNode(2)
+node1.next = ListNode(4)
+node1.next.next = ListNode(3)
+
+# l2 = [5,6,4]
+node2 = ListNode(5)
+node2.next = ListNode(6)
+node2.next.next = ListNode(4)
+```
+
+2. For Example 2:
+```python
+# l1 = [0]
+node1 = ListNode(0)
+
+# l2 = [0]
+node2 = ListNode(0)
+```
+
+3. For Example 3:
+```python
+# l1 = [9,9,9,9,9,9,9]
+node1 = ListNode(9)
+node1.next = ListNode(9)
+node1.next.next = ListNode(9)
+node1.next.next.next = ListNode(9)
+node1.next.next.next.next = ListNode(9)
+node1.next.next.next.next.next = ListNode(9)
+node1.next.next.next.next.next.next = ListNode(9)
+
+# l2 = [9,9,9,9]
+node2 = ListNode(9)
+node2.next = ListNode(9)
+node2.next.next = ListNode(9)
+node2.next.next.next = ListNode(9)
+```
+
+For the JavaScript function signature, you can generate input values for `l1` and `l2` in a similar way.
