@@ -13,6 +13,40 @@ app.listen(port, () => {
   console.log("My app is running on port", port);
 });
 
+function transformFunctionSignatures(problem) {
+  const signatures = problem.functionSignatures;
+  const transformed = [];
+
+  for (const [language, func] of Object.entries(signatures)) {
+    // Extract function name from the function string
+    let name;
+    if (language.toLowerCase() === "python") {
+      name = func.match(/def (\w+)/)[1];
+    } else if (language.toLowerCase() === "javascript") {
+      name = func.match(/function (\w+)/)[1];
+    } else {
+      // Add more languages and their corresponding regex patterns here if needed
+      name = "unknown";
+    }
+
+    transformed.push({
+      name: name,
+      language: language,
+      value: func,
+    });
+  }
+
+  return transformed;
+}
+
+// Example usage
+const problem = {
+  "functionSignatures": {
+    "python": "def intToRoman(num: int) -> str:\n\n\n    pass",
+    "javascript": "function intToRoman(num) {\n\n\n}"
+  }
+};
+
 async function seeding() {
   try {
     await mongoose.connect(process.env.DB_URI, {
@@ -37,3 +71,38 @@ async function seeding() {
 }
 
 seeding();
+
+
+// Make a function that takes in a problem object and returns an array formatted like this:
+
+// "functionSignatures": [
+//   {
+//     "name": "function name",
+//     "language": "the language",
+//     "value": "the function"
+//   }
+// ]
+
+// For example:
+
+// I will pass in this object
+
+// "functionSignatures": {
+//   "python": "def intToRoman(num: int) -> str:\n\n\n    pass",
+//   "javascript": "function intToRoman(num) {\n\n\n}"
+// }
+
+// and the function will return
+
+// "functionSignatures": [
+//   {
+//     "name": "intToRoman",
+//     "language": "Python",
+//     "value": "def intToRoman(num: int) -> str:\n\n\n    pass"
+//   },
+//   {
+//     "name": "intToRoman",
+//     "language": "JavaScript",
+//     "value": "function intToRoman(num) {\n\n\n}"
+//   }
+// ]
