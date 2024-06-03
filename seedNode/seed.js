@@ -49,19 +49,25 @@ const problem = {
 
 async function seeding() {
   try {
-    await mongoose.connect(process.env.DB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('Connected to MongoDB');
+  await mongoose.connect(process.env.DB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+  console.log('Connected to MongoDB');
 
-    // Log all documents to inspect structure
-    const allDocuments = await Problem.find({});
-    // console.log('All Documents:', JSON.stringify(allDocuments, null, 2));
+  // Fetch all documents
+  const allDocuments = await Problem.find({});
+  
+  for (let i = 0; i < allDocuments.length; i++) {
+    const problem = allDocuments[i];
+    const transformedSignatures = transformFunctionSignatures(problem);
 
-    for (let i=0; i < allDocuments.length; i++) {
-      console.log('Document:', JSON.stringify(allDocuments[i].functionSignatures));
-    }
+    // Update the document's functionSignatures field
+    problem.functionSignatures = transformedSignatures;
+    await problem.save();
+    
+    console.log(`Updated document with id: ${problem._id}`);
+  }
     // Close the database connection
     await mongoose.connection.close();
     console.log('Connection closed');
