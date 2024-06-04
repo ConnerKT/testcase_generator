@@ -1,6 +1,3 @@
-// This is the seed file to alter the databases functionSequence to the correct format
-// This currently doesn't work, why? Don't ask me
-
 package main
 
 import (
@@ -25,7 +22,6 @@ func functionSignature() {
 
 	// Get MongoDB URI from environment variable
 	uri := os.Getenv("DB_TESTING")
-	//get chat api key
 	apiKey := os.Getenv("OPENAI_API_KEY")
 
 	// Connect to MongoDB
@@ -34,11 +30,14 @@ func functionSignature() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer client.Disconnect(context.TODO())
+	defer func() {
+		if err := client.Disconnect(context.TODO()); err != nil {
+			log.Fatalf("Error disconnecting MongoDB: %v", err)
+		}
+	}()
 
 	// Ping MongoDB
-	err = client.Ping(context.TODO(), nil)
-	if err != nil {
+	if err := client.Ping(context.TODO(), nil); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("Connected to MongoDB!")
@@ -48,19 +47,26 @@ func functionSignature() {
 
 	// Find challenges
 	ctx := context.Background()
-	// finds all the problems (idk how)
 	cursor, err := collection.Find(ctx, bson.M{})
 	if err != nil {
 		log.Fatal(err)
 	}
-	//wtf is a cursor
-	defer cursor.Close(ctx)
+	defer func() {
+		if err := cursor.Close(ctx); err != nil {
+			log.Fatalf("Error closing cursor: %v", err)
+		}
+	}()
+
+	// Open file for writing
 	f, err := os.OpenFile("practiceFS.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatalf("Error opening file: %v", err)
 	}
-	defer f.Close()
-
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Fatalf("Error closing file: %v", err)
+		}
+	}()
 
 	for cursor.Next(context.TODO()) {
 		var result models.Challenge
@@ -70,18 +76,20 @@ func functionSignature() {
 
 		fmt.Printf("Decoded document: %+v\n", result)
 
-		prompt := fmt.Sprintf(`Given the following leetcode problem description: %s,`, result.Description, `generate a function signature for the problem:`, result.Title, `formatted like this, I want JavaScript and Python:`, `{
-			{
-				Name:    "title",
-				Language: "python",
-				Value: "the function signature",
-			},
-			{
-				Name:    "title",
-				Language: "javascript",
-				Value: "the function signature",
-			},
-		}`)
+		prompt := `Given the following leetcode problem description: ` + result.Description + `,
+generate a function signature for the problem: ` + result.Title + ` formatted like this, I want JavaScript and Python:
+{
+	{
+		Name:    "title",
+		Language: "python",
+		Value: "the function signature",
+	},
+	{
+		Name:    "title",
+		Language: "javascript",
+		Value: "the function signature",
+	},
+}`
 
 		openClient := openai.NewClient(apiKey)
 		resp, err := openClient.CreateChatCompletion(
