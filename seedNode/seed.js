@@ -46,7 +46,8 @@ const problem = {
     "javascript": "function intToRoman(num) {\n\n\n}"
   }
 };
-
+let tet= transformFunctionSignatures(problem)
+console.log(tet)
 async function seeding() {
   try {
   await mongoose.connect(process.env.DB_URI, {
@@ -54,7 +55,7 @@ async function seeding() {
     useUnifiedTopology: true,
   });
   console.log('Connected to MongoDB');
-
+  
   // Fetch all documents
   const allDocuments = await Problem.find({});
   

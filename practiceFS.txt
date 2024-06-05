@@ -1,0 +1,12 @@
+[
+	{
+		Name: "Two Sum",
+		Language: "python",
+		Value: "def twoSum(nums: List[int], target: int) -> List[int]:",
+	},
+	{
+		Name: "Two Sum",
+		Language: "javascript",
+		Value: "function twoSum(nums, target) {",
+	}
+]

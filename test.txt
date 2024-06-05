@@ -105,3 +105,79 @@ node2.next.next.next = ListNode(9)
 ```
 
 For the JavaScript function signature, you can generate input values for `l1` and `l2` in a similar way.
+To solve this problem in less than O(n^2) time complexity, we can use a hashmap to store the difference between the target and each element of the array along with the index of that element. This way, when we iterate through the array, we can check if the current element's complement exists in the hashmap. If it does, we have found the pair that adds up to the target.
+
+Here's the Python code to implement this:
+
+```python
+def twoSum(nums, target):
+    num_map = {}
+    
+    for i in range(len(nums)):
+        complement = target - nums[i]
+        if complement in num_map:
+            return [num_map[complement], i]
+        num_map[nums[i]] = i
+    
+    return None
+```
+
+And here's the JavaScript equivalent:
+
+```javascript
+function twoSum(nums, target) {
+    let numMap = new Map();
+    
+    for (let i = 0; i < nums.length; i++) {
+        let complement = target - nums[i];
+        if (numMap.has(complement)) {
+            return [numMap.get(complement), i];
+        }
+        numMap.set(nums[i], i);
+    }
+    
+    return null;
+}
+```
+
+Using this approach, we can find the two numbers that add up to the target in O(n) time complexity.
+For the given leetcode problem, we need to generate input values in the form of linked lists that represent the numbers to be added together. Here are some example input values that match the function signatures in Python and JavaScript:
+
+Python:
+```python
+def addTwoNumbers(l1, l2):
+    pass
+
+# Example 1
+l1 = [2, 4, 3]
+l2 = [5, 6, 4]
+
+# Example 2
+l1 = [0]
+l2 = [0]
+
+# Example 3
+l1 = [9, 9, 9, 9, 9, 9, 9]
+l2 = [9, 9, 9, 9]
+```
+
+JavaScript:
+```javascript
+function addTwoNumbers(l1, l2) {
+    // Implementation code here
+}
+
+// Example 1
+let l1 = [2, 4, 3];
+let l2 = [5, 6, 4];
+
+// Example 2
+let l1 = [0];
+let l2 = [0];
+
+// Example 3
+let l1 = [9, 9, 9, 9, 9, 9, 9];
+let l2 = [9, 9, 9, 9];
+```
+
+These input values represent linked lists that store the digits of the numbers in the reverse order as described in the problem statement.
