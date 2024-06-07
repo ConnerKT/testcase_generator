@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 	openai "github.com/sashabaranov/go-openai"
@@ -13,6 +16,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"testcase_generator/models"
 )
+
+type FunctionSignature struct {
+	Name     string `json:"name"`
+	Language string `json:"language"`
+	Value    string `json:"value"`
+}
 
 func functionSignature() {
 	// Load environment variables
@@ -57,17 +66,6 @@ func functionSignature() {
 		}
 	}()
 
-	// Open file for writing
-	// f, err := os.OpenFile("practiceFS.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	// if err != nil {
-	// 	log.Fatalf("Error opening file: %v", err)
-	// }
-	// defer func() {
-	// 	if err := f.Close(); err != nil {
-	// 		log.Fatalf("Error closing file: %v", err)
-	// 	}
-	// }()
-
 	for cursor.Next(context.TODO()) {
 		var result models.Challenge
 		if err := cursor.Decode(&result); err != nil {
@@ -76,53 +74,77 @@ func functionSignature() {
 
 		fmt.Printf("Decoded document: %+v\n", result)
 
-		prompt := `Given the following leetcode problem description: ` + result.Description + `,
-generate a function signature for the problem: ` + result.Title + ` formatted like this, I want JavaScript and Python:
+		prompt := fmt.Sprintf(`Given the following leetcode problem description: %s,
+generate a function signature for the problem: %s formatted as JSON like this, I want JavaScript and Python:
 [
 	{
-		Name:    "title",
-		Language: "python",
-		Value: "the function signature",
+		"name": "functionNameInPython",
+		"language": "python",
+		"value": "def functionNameInPython(params):"
 	},
 	{
-		Name:    "title",
-		Language: "javascript",
-		Value: "the function signature",
-	},
-]`
+		"name": "functionNameInJavaScript",
+		"language": "javascript",
+		"value": "function functionNameInJavaScript(params) { }"
+	}
+]`, result.Description, result.Title)
 
-		openClient := openai.NewClient(apiKey)
-		resp, err := openClient.CreateChatCompletion(
-			context.Background(),
-			openai.ChatCompletionRequest{
-				Model: openai.GPT3Dot5Turbo,
-				Messages: []openai.ChatCompletionMessage{
-					{
-						Role:    openai.ChatMessageRoleUser,
-						Content: prompt,
+		var functionSignatures []FunctionSignature
+
+		for attempts := 1; attempts <= 3; attempts++ {
+			openClient := openai.NewClient(apiKey)
+			resp, err := openClient.CreateChatCompletion(
+				context.Background(),
+				openai.ChatCompletionRequest{
+					Model: openai.GPT3Dot5Turbo,
+					Messages: []openai.ChatCompletionMessage{
+						{
+							Role:    openai.ChatMessageRoleUser,
+							Content: prompt,
+						},
 					},
 				},
-			},
-		)
-		if err != nil {
-			log.Fatalf("ChatCompletion error: %v", err)
-		}
-		if len(resp.Choices) == 0 {
-			log.Fatalf("No choices returned from OpenAI")
+			)
+			if err != nil {
+				log.Printf("ChatCompletion error: %v", err)
+				time.Sleep(2 * time.Second)
+				continue
+			}
+			if len(resp.Choices) == 0 {
+				log.Printf("No choices returned from OpenAI, attempt %d", attempts)
+				time.Sleep(2 * time.Second)
+				continue
+			}
+
+			content := resp.Choices[0].Message.Content
+			fmt.Printf("OpenAI response: %s\n", content)
+
+			// Ensure the response is valid JSON
+			content = strings.TrimSpace(content)
+			if !strings.HasPrefix(content, "[") || !strings.HasSuffix(content, "]") {
+				log.Printf("Invalid JSON format returned, attempt %d", attempts)
+				time.Sleep(2 * time.Second)
+				continue
+			}
+
+			err = json.Unmarshal([]byte(content), &functionSignatures)
+			if err != nil {
+				log.Printf("Error unmarshalling function signatures: %v, attempt %d", err, attempts)
+				time.Sleep(2 * time.Second)
+				continue
+			}
+			break
 		}
 
-		content := resp.Choices[0].Message.Content
-		// if _, err := f.WriteString(content + "\n"); err != nil {
-		// 	log.Fatalf("Error writing to file: %v", err)
-		// }
-
-		// fmt.Println(content)
+		if functionSignatures == nil {
+			log.Fatalf("Failed to get valid function signatures after 3 attempts")
+		}
 
 		// Update the document with the new field functionSignature
 		filter := bson.M{"_id": result.ID}
 		update := bson.M{
 			"$set": bson.M{
-				"functionSignature": content,
+				"functionSignature": functionSignatures,
 			},
 		}
 
